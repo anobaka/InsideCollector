@@ -1,0 +1,17 @@
+.property-value {
+
+  display: flex;
+  align-items: center;
+
+  &>* {
+    width: 100%;
+  }
+
+  &.error {
+    color: red;
+  }
+
+  &.success {
+    color: green;
+  }
+}

@@ -1,0 +1,17 @@
+@import '@alifd/theme-design-pro/variables.css';
+@import '@alifd/theme-design-pro/dist/next.var.css';
+
+body {
+  -webkit-font-smoothing: antialiased;
+
+  .block {
+    padding: 10px;
+    border-radius: 4px;
+    background: white;
+    box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgb(209, 213, 219) 0px 0px 0px 1px inset;
+  }
+}
+
+.next-loading {
+  position: unset;
+}

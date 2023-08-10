@@ -1,0 +1,14 @@
+.my-lists-page {
+  .my-lists {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+  }
+
+  &>.lists {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+}

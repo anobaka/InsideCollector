@@ -1,0 +1,3 @@
+﻿Add-Migration Init -v -p InsideCollector.Business -s InsideCollector -Context InsideCollectorDbContext;
+
+Remove-Migration -v -c InsideCollectorDbContext -p InsideCollector.Business -s InsideCollector;
