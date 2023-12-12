@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace InsideCollector.Models.Dto.Request
 {
-    public class ListDataValuePutRequestModel
+    public record ListDataValueBulkRemoveRequestModel
     {
-        public ListDataKey Key { get; set; } = null!;
-        public string? Value { get; set; }
+        public ListDataKey[] Keys { get; set; } = null!;
     }
 }

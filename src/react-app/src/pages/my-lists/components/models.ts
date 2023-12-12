@@ -27,6 +27,7 @@ export interface IListProperty {
   order: number;
   options?: IListPropertyOption[];
   width?: number;
+  hidden: boolean;
 }
 
 export interface IListPropertyOption {
@@ -48,7 +49,7 @@ export interface IListData {
 }
 
 export interface IListDataValue {
-  id: number;
+  id: string;
   dataId: number;
   propertyId: number;
   value?: string;

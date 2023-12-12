@@ -90,6 +90,13 @@ export enum InsideCollectorModelsConstantsListPropertyType {
   Value200 = 200,
 }
 
+export interface InsideCollectorModelsDtoListDataKey {
+  /** @format int32 */
+  dataId?: number;
+  /** @format int32 */
+  propertyId?: number;
+}
+
 export interface InsideCollectorModelsDtoRequestDataPutRequestModel {
   /** @format int32 */
   id?: number;
@@ -105,12 +112,22 @@ export interface InsideCollectorModelsDtoRequestDataReorderRequestModel {
   newOrder?: number;
 }
 
+export interface InsideCollectorModelsDtoRequestListDataValueBulkRemoveRequestModel {
+  keys?: InsideCollectorModelsDtoListDataKey[] | null;
+}
+
+export interface InsideCollectorModelsDtoRequestListDataValueCopyRequestModel {
+  source?: InsideCollectorModelsDtoListDataKey;
+  targets?: InsideCollectorModelsDtoListDataKey[] | null;
+}
+
 export interface InsideCollectorModelsDtoRequestListDataValuePutRequestModel {
-  /** @format int32 */
-  dataId?: number;
-  /** @format int32 */
-  propertyId?: number;
+  key?: InsideCollectorModelsDtoListDataKey;
   value?: string | null;
+}
+
+export interface InsideCollectorModelsDtoRequestListPropertyPatchRequestModel {
+  hidden?: boolean | null;
 }
 
 export interface InsideCollectorModelsDtoRequestListPutRequestModel {
@@ -170,8 +187,8 @@ export interface InsideCollectorModelsEntitiesListData {
 }
 
 export interface InsideCollectorModelsEntitiesListDataValue {
-  /** @format int32 */
-  id?: number;
+  /** @maxLength 24 */
+  id?: string | null;
   /** @format int32 */
   dataId?: number;
   /** @format int32 */
@@ -196,6 +213,7 @@ export interface InsideCollectorModelsEntitiesListProperty {
   function?: string | null;
   /** @format int32 */
   externalListId?: number | null;
+  hidden?: boolean;
   /** @maxLength 64 */
   group?: string | null;
   /** [1: Multiple] */
@@ -609,6 +627,46 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         format: "json",
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @tags DataValue
+     * @name CopyDataValueToOthers
+     * @request PUT:/data/value/copy
+     */
+    copyDataValueToOthers: (
+      data: InsideCollectorModelsDtoRequestListDataValueCopyRequestModel,
+      params: RequestParams = {},
+    ) =>
+      this.request<BootstrapModelsResponseModelsBaseResponse, any>({
+        path: `/data/value/copy`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags DataValue
+     * @name BulkRemoveDataValues
+     * @request DELETE:/data/value/bulk
+     */
+    bulkRemoveDataValues: (
+      data: InsideCollectorModelsDtoRequestListDataValueBulkRemoveRequestModel,
+      params: RequestParams = {},
+    ) =>
+      this.request<BootstrapModelsResponseModelsBaseResponse, any>({
+        path: `/data/value/bulk`,
+        method: "DELETE",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   file = {
     /**
@@ -709,16 +767,17 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Property
-     * @name ReorderProperties
-     * @request PUT:/property/order
+     * @name PatchListProperty
+     * @request PATCH:/property/{id}
      */
-    reorderProperties: (data: InsideCollectorModelsDtoRequestDataReorderRequestModel, params: RequestParams = {}) =>
-      this.request<
-        BootstrapModelsResponseModelsSingletonResponse1SystemCollectionsGenericDictionary2SystemInt32SystemInt32,
-        any
-      >({
-        path: `/property/order`,
-        method: "PUT",
+    patchListProperty: (
+      id: number,
+      data: InsideCollectorModelsDtoRequestListPropertyPatchRequestModel,
+      params: RequestParams = {},
+    ) =>
+      this.request<BootstrapModelsResponseModelsBaseResponse, any>({
+        path: `/property/${id}`,
+        method: "PATCH",
         body: data,
         type: ContentType.Json,
         format: "json",
@@ -736,6 +795,26 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<BootstrapModelsResponseModelsBaseResponse, any>({
         path: `/property/${id}`,
         method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Property
+     * @name ReorderProperties
+     * @request PUT:/property/order
+     */
+    reorderProperties: (data: InsideCollectorModelsDtoRequestDataReorderRequestModel, params: RequestParams = {}) =>
+      this.request<
+        BootstrapModelsResponseModelsSingletonResponse1SystemCollectionsGenericDictionary2SystemInt32SystemInt32,
+        any
+      >({
+        path: `/property/order`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),

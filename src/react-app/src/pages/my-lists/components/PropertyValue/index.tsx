@@ -1,6 +1,6 @@
 import { convertDataValue, renderPropertyValue } from '../utils';
 import { IList, IListData, IListDataValue, IListProperty } from '../models';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ListPropertyTag, ListPropertyType } from '@/sdk/constants';
 import { Balloon, Button, DatePicker2, Input, NumberPicker, Select, TimePicker2, Upload } from '@alifd/next';
 import BApi from '@/sdk/BApi';
@@ -13,7 +13,13 @@ interface IProps {
   property: IListProperty;
   onUpdated: (value: IListDataValue) => any;
   onEditing: (editing: boolean) => any;
-  onValueComputed: (value: any) => any;
+  // onValueComputed: (value: any) => any;
+  onSelect: () => any;
+  selected?: boolean;
+  /*
+  * If return value is false, the deletion will be stopped.
+  *  */
+  requireDeletion: () => boolean;
 }
 
 export default (props: IProps) => {
@@ -24,17 +30,27 @@ export default (props: IProps) => {
     property,
     onUpdated,
     onEditing,
-    onValueComputed,
+    // onValueComputed,
+    onSelect,
+    selected: propsSelected,
+    requireDeletion = () => true,
   } = props;
 
+  const domRef = useRef<any>();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState<any>();
-  const [copied, setCopied] = useState(false);
   const [successHighlighting, setSuccessHighlighting] = useState(false);
+  const [selected, setSelected] = useState(propsSelected ?? false);
 
   useEffect(() => {
     onEditing(editing);
   }, [editing]);
+
+  useEffect(() => {
+    if (propsSelected != undefined) {
+      setSelected(propsSelected);
+    }
+  }, [propsSelected]);
 
   const renderEditingComponent = () => {
     switch (property.type) {
@@ -145,8 +161,10 @@ export default (props: IProps) => {
             onSuccess={async (file, value) => {
               const { url } = file.response;
               const rsp = await BApi.data.putListDataValue({
-                dataId: dataForComputing.id,
-                propertyId: property.id,
+                key: {
+                  dataId: dataForComputing.id,
+                  propertyId: property.id,
+                },
                 value: url == undefined ? undefined : JSON.stringify(url),
               });
               if (!rsp.code) {
@@ -180,6 +198,8 @@ export default (props: IProps) => {
                 e.preventDefault();
               }}
               onKeyDown={e => {
+                console.log(e);
+
                 e.stopPropagation();
                 e.preventDefault();
               }}
@@ -196,8 +216,10 @@ export default (props: IProps) => {
 
   const save = async () => {
     const rsp = await BApi.data.putListDataValue({
-      dataId: dataForComputing.id,
-      propertyId: property.id,
+      key: {
+        dataId: dataForComputing.id,
+        propertyId: property.id,
+      },
       value: value == undefined ? undefined : JSON.stringify(value),
     });
     if (!rsp.code) {
@@ -223,6 +245,7 @@ export default (props: IProps) => {
         className={'property-value'}
         onBlur={save}
         onKeyDown={e => {
+          console.log(e);
           if (e.key == 'Enter') {
             save();
           }
@@ -251,51 +274,24 @@ export default (props: IProps) => {
         case ListPropertyType.Input:
         case ListPropertyType.DateTime:
         case ListPropertyType.TimeSpan:
-        case ListPropertyType.Select:
         case ListPropertyType.Date:
         case ListPropertyType.Text:
         case ListPropertyType.External:
         case ListPropertyType.Computed:
           valueComponent = text;
           break;
+        case ListPropertyType.Select:
+          valueComponent = property.options?.find(o => o.value == text)?.label;
+          break;
         case ListPropertyType.Image:
           valueComponent = (
-            <Balloon
-              closable={false}
-              triggerType={'hover'}
-              trigger={(
-                <img
-                  src={`http://localhost:5077${text}`}
-                  style={{
-                  maxWidth: '100%',
-                  maxHeight: '100%',
-                }}
-                />
-              )}
-              align={'t'}
-              autoFocus={false}
-            >
-              <Button
-                warning
-                type={'normal'}
-                onClick={async () => {
-                  const rsp = await BApi.data.putListDataValue({
-                    dataId: dataForComputing.id,
-                    propertyId: property.id,
-                    value: undefined,
-                  });
-                  if (!rsp.code) {
-                    highlight();
-                    setEditing(false);
-                    if (onUpdated) {
-                      onUpdated(convertDataValue(rsp.data!));
-                    }
-                  }
-                }}
-              >
-                Delete
-              </Button>
-            </Balloon>
+            <img
+              src={`http://localhost:5077${text}`}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+              }}
+            />
           );
           break;
         case ListPropertyType.File:
@@ -306,7 +302,78 @@ export default (props: IProps) => {
 
     return (
       <div
-        className={`property-value ${error ? 'error' : ''} ${successHighlighting ? 'success' : ''}`}
+        ref={domRef}
+        tabIndex={0}
+        onPaste={e => {
+          for (const item of e.clipboardData.items) {
+            console.log(item.type);
+          }
+          let item = Array.from(e.clipboardData.items).find(x => /^image\//.test(x.type));
+          if (item != undefined) {
+            if (property.type == ListPropertyType.Image) {
+              let blob = item.getAsFile();
+              if (blob) {
+                BApi.file.uploadFile({ file: blob }).then(rsp => {
+                  if (!rsp.code) {
+                    BApi.data.putListDataValue({
+                      key: {
+                        dataId: dataForComputing.id,
+                        propertyId: property.id,
+                      },
+                      value: rsp.data == undefined ? undefined : JSON.stringify(rsp.data),
+                    }).then(r => {
+                      if (!r.code) {
+                        highlight();
+                        setEditing(false);
+                        if (onUpdated) {
+                          console.log('on updated', convertDataValue(r.data!));
+                          onUpdated(convertDataValue(r.data!));
+                        }
+                      }
+                    });
+                  }
+                });
+              }
+            }
+          }
+        }}
+        onMouseDown={e => {
+          // console.log(propsSelected, 'ppp');
+          if (e.button == 0) {
+            if (!selected) {
+              domRef.current.focus();
+              if (propsSelected == undefined) {
+                setSelected(true);
+              }
+            } else {
+              domRef.current.blur();
+            }
+            if (onSelect) {
+              onSelect();
+            }
+          }
+        }}
+        onKeyDown={async e => {
+          if (e.key == 'Delete') {
+            if (requireDeletion()) {
+              const rsp = await BApi.data.putListDataValue({
+                key: {
+                  dataId: dataForComputing.id,
+                  propertyId: property.id,
+                },
+                value: undefined,
+              });
+              if (!rsp.code) {
+                highlight();
+                setEditing(false);
+                if (onUpdated) {
+                  onUpdated(convertDataValue(rsp.data!));
+                }
+              }
+            }
+          }
+        }}
+        className={`property-value ${error ? 'error' : ''} ${successHighlighting ? 'success' : ''} ${selected ? 'selected' : ''}`}
         onDoubleClick={e => {
           e.preventDefault();
           e.stopPropagation();
@@ -329,33 +396,7 @@ export default (props: IProps) => {
           }
         }}
       >
-        <Balloon
-          triggerType={'hover'}
-          trigger={valueComponent}
-          closable={false}
-          autoFocus={false}
-          align={'t'}
-        >
-          {copied ? 'Copied' : (
-            <Button
-              type={'primary'}
-              text
-              onClick={(e) => {
-                if (text != undefined && !copied) {
-                  e.preventDefault();
-                  navigator.clipboard.writeText(text).then(() => {
-                    setCopied(true);
-                    highlight(() => {
-                      setCopied(false);
-                    });
-                  });
-                }
-              }}
-            >
-              Copy
-            </Button>
-          )}
-        </Balloon>
+        {valueComponent}
       </div>
     );
 

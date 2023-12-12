@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Button, Dialog, Form, Input, List, NumberPicker, Select } from '@alifd/next';
+import { Button, Checkbox, Dialog, Form, Input, List, NumberPicker, Select } from '@alifd/next';
 import { createPortalOfComponent } from '@/components/utils';
 import { listPropertyTags, ListPropertyType, listPropertyTypes } from '@/sdk/constants';
 import { useUpdate } from 'react-use';
@@ -192,6 +192,9 @@ function Index(props: IProps) {
         </Form.Item>
         <Form.Item label={'Width'} name={'width'}>
           <NumberPicker innerAfter="%" precision={0} step={1} />
+        </Form.Item>
+        <Form.Item label={'Hidden'} name={'hidden'}>
+          <Checkbox />
         </Form.Item>
         <Form.Submit onClick={async v => {
           await BApi.property.putListProperty({

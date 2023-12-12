@@ -20,6 +20,7 @@ namespace InsideCollector.Models.Entities
         public ListPropertyType Type { get; set; }
         public string? Function { get; set; }
         public int? ExternalListId { get; set; }
+        public bool Hidden { get; set; }
         [MaxLength(DataLengths.MaxNameLength)] public string? Group { get; set; }
 
         public ListPropertyTag Tags { get; set; } = 0;

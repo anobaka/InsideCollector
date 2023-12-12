@@ -33,6 +33,7 @@ export function convertList(allLists: InsideCollectorModelsEntitiesInsideList[])
       description: p.description ?? undefined,
       order: p.order ?? Number.MAX_VALUE,
       width: p.width,
+      hidden: p.hidden ?? false,
     })),
     dataNameConvention: l.dataNameConvention ?? undefined,
     description: l.description ?? undefined,

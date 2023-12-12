@@ -9,5 +9,6 @@ namespace InsideCollector.Models.Constants
     public class DataLengths
     {
         public const int MaxNameLength = 64;
+        public const int MaxDataValueIdLength = 24;
     }
 }

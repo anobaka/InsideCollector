@@ -3,6 +3,7 @@ using System;
 using InsideCollector.Business;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InsideCollector.Business.Migrations
 {
     [DbContext(typeof(InsideCollectorDbContext))]
-    partial class InsideCollectorDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230905094132_AddHiddenToProperty")]
+    partial class AddHiddenToProperty
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -84,9 +86,9 @@ namespace InsideCollector.Business.Migrations
 
             modelBuilder.Entity("InsideCollector.Models.Entities.ListDataValue", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasMaxLength(24)
-                        .HasColumnType("varchar(24)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
 
                     b.Property<int>("DataId")
                         .HasColumnType("int");

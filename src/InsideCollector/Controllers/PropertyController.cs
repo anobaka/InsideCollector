@@ -25,6 +25,11 @@ namespace InsideCollector.Controllers
         [SwaggerOperation(OperationId = "PutListProperty")]
         public async Task<BaseResponse> PutListProperty([FromBody] ListProperty data)
         {
+            if (string.IsNullOrEmpty(data.Group))
+            {
+                data.Group = null;
+            }
+
             if (data.Id > 0)
             {
                 _dbCtx.Attach(data).State = EntityState.Modified;
@@ -56,6 +61,26 @@ namespace InsideCollector.Controllers
                 {
                     po.Label = co.Label;
                 }
+            }
+
+            await _dbCtx.SaveChangesAsync();
+
+            return BaseResponseBuilder.Ok;
+        }
+
+        [HttpPatch("{id}")]
+        [SwaggerOperation(OperationId = "PatchListProperty")]
+        public async Task<BaseResponse> Patch(int id, [FromBody] ListPropertyPatchRequestModel patches)
+        {
+            var data = await _dbCtx.ListProperties.FirstOrDefaultAsync(a => a.Id == id);
+            if (data == null)
+            {
+                return BaseResponseBuilder.NotFound;
+            }
+
+            if (patches.Hidden.HasValue && data.Hidden != patches.Hidden.Value)
+            {
+                data.Hidden = patches.Hidden.Value;
             }
 
             await _dbCtx.SaveChangesAsync();
@@ -96,7 +121,7 @@ namespace InsideCollector.Controllers
         [SwaggerOperation(OperationId = "DeleteListProperty")]
         public async Task<BaseResponse> DeleteListProperty(int id)
         {
-            _dbCtx.Remove(new ListProperty() { Id = id });
+            _dbCtx.Remove(new ListProperty() {Id = id});
             var options = await _dbCtx.ListPropertyOptions.Where(a => a.PropertyId == id).ToListAsync();
             _dbCtx.RemoveRange(options);
             await _dbCtx.SaveChangesAsync();

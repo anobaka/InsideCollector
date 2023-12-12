@@ -11,6 +11,12 @@ import merge from 'deepmerge';
 import { useUpdateEffect } from 'react-use';
 import './$id.list.scss';
 
+export enum SelectionMode {
+  None = 1,
+  Ctrl = 2,
+  Shift = 3,
+}
+
 export default () => {
   const { id: paramId } = useParams();
   const id = parseInt(paramId!, 10);
@@ -19,6 +25,11 @@ export default () => {
   const listsRef = useRef(lists);
   const [data, setData] = useState<Record<number, IListData[]>>({});
   const [allDataForComputing, setAllDataForComputing] = useState<Record<number, IListData[]>>({});
+
+  const [selectionMode, setSelectionMode] = useState(SelectionMode.None);
+  const selectionModeRef = useRef(selectionMode);
+
+  const [selection, setSelection] = useState<{listId: number; range?: {si: number; sj: number; ei: number; ej: number}}>();
 
   useUpdateEffect(() => {
     listsRef.current = lists;
@@ -47,7 +58,55 @@ export default () => {
   }, []);
 
   useEffect(() => {
+    selectionModeRef.current = selectionMode;
+  }, [selectionMode]);
+
+  const onKeyDown = useCallback((e) => {
+    // console.log(e);
+    switch (e.key) {
+      case 'Control':
+      {
+        e.preventDefault();
+        if (selectionModeRef.current != SelectionMode.Ctrl) {
+          setSelectionMode(SelectionMode.Ctrl);
+        }
+        break;
+      }
+      case 'Shift':
+      {
+        e.preventDefault();
+        if (selectionModeRef.current != SelectionMode.Shift) {
+          setSelectionMode(SelectionMode.Shift);
+        }
+        break;
+      }
+    }
+  }, []);
+
+  const onKeyUp = useCallback((e) => {
+    switch (e.key) {
+      case 'Control':
+      case 'Shift':
+      {
+        e.preventDefault();
+        if (selectionModeRef.current) {
+          setSelectionMode(SelectionMode.None);
+        }
+        break;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     initialize();
+
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
   }, []);
 
   useEffect(() => {
@@ -152,6 +211,8 @@ export default () => {
     });
   }, []);
 
+  console.log('multi select', SelectionMode[selectionMode]);
+
   return (
     <div className={'my-lists-page'}>
       <div className={'my-lists'}>
@@ -171,6 +232,7 @@ export default () => {
           return (
             <List
               key={l.id}
+              selectionMode={selectionMode}
               list={l}
               lists={lists}
               showDetail={showListDetail}
@@ -185,6 +247,20 @@ export default () => {
                   listData.push(d);
                 }
                 setData({ ...data, [l.id]: listData });
+              }}
+              onBulkDataChange={ds => {
+                const changedMap = ds.reduce((p, c) => {
+                  p[c.id] = c;
+                  return p;
+                }, {} as Record<number, IListData>);
+                const allDataInList = data[l.id] || [];
+                for (let i = 0; i < allDataInList.length; i++) {
+                  const pd = allDataInList[i];
+                  if (pd.id in changedMap) {
+                    allDataInList[i] = changedMap[pd.id];
+                  }
+                }
+                setData({ ...data, [l.id]: allDataInList });
               }}
               onDataDeleted={id => {
                 setData({
